@@ -5,6 +5,7 @@ import config
 import time
 import sys
 import identity
+import message
 
 
 class Client:
@@ -12,7 +13,7 @@ class Client:
         conn = cfg['connection']
         self._address = (conn['address'], conn['port'])
         self._socket = None
-        self._message_size = cfg['message']['size']
+        self._msg_size = cfg['message']['size']
         self._id = identifier
 
     def run(self):
@@ -22,8 +23,8 @@ class Client:
             while True:
                 response = self._request()
                 self._process_response(response)
-        except socket.error as (value, message):
-            print('Error {}: {}'.format(value, message))
+        except socket.error as (value, msg):
+            print('Error {}: {}'.format(value, msg))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
@@ -37,13 +38,14 @@ class Client:
             self._socket.close()
 
     def _request(self):
-        line = '{}: {}\n'.format(self._id, time.ctime(time.time()))
-        self._socket.send(line)
-        return self._socket.recv(self._message_size)
+        curr_time = time.ctime(time.time())
+        msg = message.Message(self._id, self._id, 'Hey! It\'s {}'.format(curr_time))
+        self._socket.send(str(msg))
+        return self._socket.recv(self._msg_size)
 
     @staticmethod
     def _process_response(response):
-        sys.stdout.write(response)
+        print(response)
         time.sleep(1)
 
 
