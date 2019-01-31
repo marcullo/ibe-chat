@@ -1,12 +1,49 @@
 #!/usr/bin/python
 import socket
 import config
+import time
+import sys
+import os
 
-cfg = config.load()
-address = (cfg['connection']['address'], cfg['connection']['port'])
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(address)
-stime = s.recv(64)
-s.close()
-print('Server time: {}'.format(stime))
+class Client:
+    def __init__(self, connection):
+        self._address = (connection['address'], connection['port'])
+        self._socket = None
+
+    def run(self):
+        try:
+            self._open_socket()
+            self._socket.connect(self._address)
+            while True:
+                response = self._request()
+                self._process_response(response)
+        except socket.error as (value, message):
+            print('Error {}: {}'.format(value, message))
+        except (KeyboardInterrupt, SystemExit):
+            pass
+        finally:
+            self._close_socket()
+
+    def _open_socket(self):
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def _close_socket(self):
+        if self._socket:
+            self._socket.close()
+
+    def _request(self):
+        line = '[{}] {}\n'.format(os.getpid(), time.ctime(time.time()))
+        self._socket.send(line)
+        return self._socket.recv(256)
+
+    @staticmethod
+    def _process_response(response):
+        sys.stdout.write(response)
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    cfg = config.load()
+    client = Client(cfg['connection'])
+    client.run()
