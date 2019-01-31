@@ -6,6 +6,8 @@ import time
 import sys
 import identity
 import message
+import request
+from request import RequestType
 
 
 class Client:
@@ -40,7 +42,9 @@ class Client:
     def _request(self):
         curr_time = time.ctime(time.time())
         msg = message.Message(self._id, self._id, 'Hey! It\'s {}'.format(curr_time))
-        self._socket.send(str(msg))
+        req = request.Request(RequestType.SEND_MSG, msg)
+        print(req)
+        self._socket.send(str(req))
         return self._socket.recv(self._msg_size)
 
     @staticmethod

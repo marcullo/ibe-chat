@@ -4,6 +4,8 @@ import socket
 import threading
 import message
 import time
+import request
+from request import RequestType
 
 
 class Server:
@@ -24,8 +26,8 @@ class Server:
                 c = Client(client, address, self._message_size)
                 c.start()
                 self._clients.append(c)
-        except socket.error as (value, message):
-            print('Error {}: {}'.format(value, message))
+        except socket.error as (val, msg):
+            print('Error {}: {}'.format(val, msg))
         except (KeyboardInterrupt, SystemExit):
             pass
 
@@ -63,9 +65,9 @@ class Client(threading.Thread):
         running = True
         try:
             while running:
-                request = self._receive_request()
-                if request:
-                    self._process_request(request)
+                req = self._receive_request()
+                if req:
+                    self._process_request(req)
                 else:
                     self.client.close()
                     running = False
@@ -83,9 +85,14 @@ class Client(threading.Thread):
 
     def _process_request(self, data):
         curr_time = time.ctime(time.time())
-        msg = message.Message.create(data)
-        print('{} {:>30} -> {:<30}'.format(curr_time, msg.sender, msg.recipient))
-        self.client.send(data)
+        req = request.Request.create(data)
+
+        if req.type == RequestType.SEND_MSG:
+            msg = message.Message.create(req.value)
+            print('{} {} {} -> {}'.format(curr_time, req.name, msg.sender, msg.recipient))
+            self.client.send(data)
+        else:
+            raise NotImplementedError
 
 
 if __name__ == "__main__":
