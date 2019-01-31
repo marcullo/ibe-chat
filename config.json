@@ -2,5 +2,8 @@
   "connection": {
     "address": "localhost",
     "port": 8765
+  },
+  "message": {
+    "size": 256
   }
 }

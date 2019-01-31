@@ -7,9 +7,11 @@ import os
 
 
 class Client:
-    def __init__(self, connection):
-        self._address = (connection['address'], connection['port'])
+    def __init__(self, cfg):
+        conn = cfg['connection']
+        self._address = (conn['address'], conn['port'])
         self._socket = None
+        self._message_size = cfg['message']['size']
 
     def run(self):
         try:
@@ -35,7 +37,7 @@ class Client:
     def _request(self):
         line = '[{}] {}\n'.format(os.getpid(), time.ctime(time.time()))
         self._socket.send(line)
-        return self._socket.recv(256)
+        return self._socket.recv(self._message_size)
 
     @staticmethod
     def _process_response(response):
@@ -44,6 +46,6 @@ class Client:
 
 
 if __name__ == "__main__":
-    cfg = config.load()
-    client = Client(cfg['connection'])
+    conf = config.load()
+    client = Client(conf)
     client.run()

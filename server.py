@@ -5,10 +5,11 @@ import threading
 
 
 class Server:
-    def __init__(self, connection):
-        self._address = ('', connection['port'])
+    def __init__(self, conn, msg_size):
+        self._address = ('', conn['port'])
         self._backlog = 5
         self._socket = None
+        self._message_size = msg_size
         self._clients = []
         self._clients_timer = threading.Timer(0.1, self._inform_about_waiting_for_clients)
 
@@ -18,7 +19,7 @@ class Server:
             running = True
             while running:
                 client, address = self._socket.accept()
-                c = Client(client, address)
+                c = Client(client, address, self._message_size)
                 c.start()
                 self._clients.append(c)
         except socket.error as (value, message):
@@ -49,10 +50,11 @@ class Server:
 
 
 class Client(threading.Thread):
-    def __init__(self, client, address):
+    def __init__(self, client, address, msg_size):
         threading.Thread.__init__(self)
         self.client = client
         self._address = address
+        self._message_size = msg_size
 
     def run(self):
         running = True
@@ -74,7 +76,7 @@ class Client(threading.Thread):
                 self.client.close()
 
     def _receive_request(self):
-        return self.client.recv(256)
+        return self.client.recv(self._message_size)
 
     def _process_request(self, data):
         self.client.send(data)
@@ -82,5 +84,7 @@ class Client(threading.Thread):
 
 if __name__ == "__main__":
     cfg = config.load()
-    server = Server(cfg['connection'])
+    connection = cfg['connection']
+    message_size = cfg['message']['size']
+    server = Server(connection, message_size)
     server.run()
