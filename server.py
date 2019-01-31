@@ -38,6 +38,7 @@ class Server:
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._socket.bind(self._address)
         self._socket.listen(self._backlog)
+        print('Listen on {}.'.format(self._address[1]))
 
     def _close_socket(self):
         if self._socket:
