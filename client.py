@@ -4,15 +4,16 @@ import socket
 import config
 import time
 import sys
-import os
+import identity
 
 
 class Client:
-    def __init__(self, cfg):
+    def __init__(self, cfg, identifier):
         conn = cfg['connection']
         self._address = (conn['address'], conn['port'])
         self._socket = None
         self._message_size = cfg['message']['size']
+        self._id = identifier
 
     def run(self):
         try:
@@ -36,7 +37,7 @@ class Client:
             self._socket.close()
 
     def _request(self):
-        line = '[{}] {}\n'.format(os.getpid(), time.ctime(time.time()))
+        line = '{}: {}\n'.format(self._id, time.ctime(time.time()))
         self._socket.send(line)
         return self._socket.recv(self._message_size)
 
@@ -51,6 +52,7 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(1)
 
+    client_id = identity.Identity(sys.argv[1], sys.argv[2])
     conf = config.load()
-    client = Client(conf)
+    client = Client(conf, client_id)
     client.run()
