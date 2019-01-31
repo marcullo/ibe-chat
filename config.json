@@ -1,0 +1,6 @@
+{
+  "connection": {
+    "address": "localhost",
+    "port": 8765
+  }
+}
