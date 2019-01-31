@@ -1,4 +1,5 @@
 #!/usr/bin/python
+"""Usage: python client.py <name> <email>"""
 import socket
 import config
 import time
@@ -46,6 +47,10 @@ class Client:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print(__doc__)
+        sys.exit(1)
+
     conf = config.load()
     client = Client(conf)
     client.run()
