@@ -2,6 +2,8 @@
 import config
 import socket
 import threading
+import message
+import time
 
 
 class Server:
@@ -67,9 +69,9 @@ class Client(threading.Thread):
                 else:
                     self.client.close()
                     running = False
-        except socket.error as (value, message):
+        except socket.error as (value, msg):
             if value is not 104:
-                print('Error {}: {}'.format(value, message))
+                print('Error {}: {}'.format(value, msg))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
@@ -80,6 +82,9 @@ class Client(threading.Thread):
         return self.client.recv(self._message_size)
 
     def _process_request(self, data):
+        curr_time = time.ctime(time.time())
+        msg = message.Message.create(data)
+        print('{} {:>30} -> {:<30}'.format(curr_time, msg.sender, msg.recipient))
         self.client.send(data)
 
 
