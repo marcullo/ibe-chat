@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.6
 """Usage: python client.py <name> <email>"""
 import socket
 import config
@@ -25,8 +25,8 @@ class Client:
             while True:
                 response = self._request()
                 self._process_response(response)
-        except socket.error as (value, msg):
-            print('Error {}: {}'.format(value, msg))
+        except socket.error as err:
+            print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
@@ -44,11 +44,12 @@ class Client:
         msg = message.Message(self._id, self._id, 'Hey! It\'s {}'.format(curr_time))
         req = request.Request(RequestType.SEND_MSG, msg)
         print(req)
-        self._socket.send(str(req))
+        self._socket.send(str(req).encode())
         return self._socket.recv(self._msg_size)
 
     @staticmethod
     def _process_response(response):
+        response = response.decode()
         print(response)
         time.sleep(1)
 

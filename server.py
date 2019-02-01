@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.6
 import config
 import socket
 import threading
@@ -28,8 +28,8 @@ class Server:
                 c = Client(client, address, self._message_size, self._db)
                 c.start()
                 self._clients.append(c)
-        except socket.error as (val, msg):
-            print('Error {}: {}'.format(val, msg))
+        except socket.error as err:
+            print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
             pass
 
@@ -74,9 +74,9 @@ class Client(threading.Thread):
                 else:
                     self.client.close()
                     running = False
-        except socket.error as (value, msg):
-            if value is not 104:
-                print('Error {}: {}'.format(value, msg))
+        except socket.error as err:
+            if err.errno is not 104:
+                print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
@@ -84,7 +84,7 @@ class Client(threading.Thread):
                 self.client.close()
 
     def _receive_request(self):
-        return self.client.recv(self._message_size)
+        return self.client.recv(self._message_size).decode()
 
     def _process_request(self, data):
         req = request.Request.create(data)
@@ -92,7 +92,7 @@ class Client(threading.Thread):
             msg = message.Message.create(req.value, time.time())
             print('{} {} {} -> {}'.format(time.ctime(msg.timestamp), req.name, msg.sender, msg.recipient))
             self._db.insert_message(msg)
-            self.client.send(data)
+            self.client.send(data.encode())
         else:
             raise NotImplementedError
 

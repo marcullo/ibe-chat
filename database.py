@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.6
 """Usage:
 `python database.py dump <type>` - read data selected by type,
 `python database.py clean <type>` - clean data selected by type.
