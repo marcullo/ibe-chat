@@ -41,10 +41,16 @@ class Client:
 
     def _request(self):
         curr_time = time.ctime(time.time())
-        msg = message.Message(self._id, self._id, 'Hey! It\'s {}'.format(curr_time))
+        self.send('Hey! It\'s {}'.format(curr_time), self._id)
+        return self.receive()
+
+    def send(self, text, target):
+        msg = message.Message(self._id, target, text)
         req = request.Request(RequestType.SEND_MSG, msg)
         print(req)
         self._socket.send(str(req).encode())
+
+    def receive(self):
         return self._socket.recv(self._msg_size)
 
     @staticmethod
