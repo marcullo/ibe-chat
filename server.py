@@ -6,16 +6,18 @@ import message
 import time
 import request
 from request import RequestType
+import database
 
 
 class Server:
-    def __init__(self, conn, msg_size):
-        self._address = ('', conn['port'])
+    def __init__(self, cfg):
+        self._address = ('', cfg['connection']['port'])
         self._backlog = 5
         self._socket = None
-        self._message_size = msg_size
+        self._message_size = cfg['message']['size']
         self._clients = []
         self._clients_timer = threading.Timer(0.1, self._inform_about_waiting_for_clients)
+        self._db = database.Database(cfg['message']['database'])
 
     def run(self):
         try:
@@ -23,7 +25,7 @@ class Server:
             running = True
             while running:
                 client, address = self._socket.accept()
-                c = Client(client, address, self._message_size)
+                c = Client(client, address, self._message_size, self._db)
                 c.start()
                 self._clients.append(c)
         except socket.error as (val, msg):
@@ -55,11 +57,12 @@ class Server:
 
 
 class Client(threading.Thread):
-    def __init__(self, client, address, msg_size):
+    def __init__(self, client, address, msg_size, db):
         threading.Thread.__init__(self)
         self.client = client
         self._address = address
         self._message_size = msg_size
+        self._db = db
 
     def run(self):
         running = True
@@ -90,14 +93,13 @@ class Client(threading.Thread):
         if req.type == RequestType.SEND_MSG:
             msg = message.Message.create(req.value)
             print('{} {} {} -> {}'.format(curr_time, req.name, msg.sender, msg.recipient))
+            self._db.insert_message(msg)
             self.client.send(data)
         else:
             raise NotImplementedError
 
 
 if __name__ == "__main__":
-    cfg = config.load()
-    connection = cfg['connection']
-    message_size = cfg['message']['size']
-    server = Server(connection, message_size)
+    conf = config.load()
+    server = Server(conf)
     server.run()
