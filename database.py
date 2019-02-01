@@ -14,6 +14,7 @@ import message
 import json
 import threading
 import sys
+import time
 
 
 class Database:
@@ -66,7 +67,8 @@ if __name__ == "__main__":
     def gen_entry_msg_db(db):
         m = message.Message('Gen Sender<gsender@gs.com>',
                             'Gen Recipient<grecipient@gr.com>',
-                            'Hello, World!')
+                            'Hello, World!',
+                            time.time())
         db.insert_message(m)
 
     db_paths = {

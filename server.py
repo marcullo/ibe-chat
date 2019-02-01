@@ -87,12 +87,10 @@ class Client(threading.Thread):
         return self.client.recv(self._message_size)
 
     def _process_request(self, data):
-        curr_time = time.ctime(time.time())
         req = request.Request.create(data)
-
         if req.type == RequestType.SEND_MSG:
-            msg = message.Message.create(req.value)
-            print('{} {} {} -> {}'.format(curr_time, req.name, msg.sender, msg.recipient))
+            msg = message.Message.create(req.value, time.time())
+            print('{} {} {} -> {}'.format(time.ctime(msg.timestamp), req.name, msg.sender, msg.recipient))
             self._db.insert_message(msg)
             self.client.send(data)
         else:
