@@ -9,6 +9,7 @@ from request import RequestType
 import database
 import json
 import pkg
+import os
 
 
 class Server:
@@ -16,6 +17,10 @@ class Server:
         folder = cfg['database']['folder']
         msg_path = cfg['message']['database']
         client_path = cfg['client']['database']
+
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+
         self._address = ('', cfg['connection']['port'])
         self._backlog = 5
         self._socket = None
