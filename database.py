@@ -39,8 +39,8 @@ class Database:
             elif recipient is None:
                 entries = self._db.search(where('sender') == sender)
             else:
-                entries = self._db.search(where('recipient') == recipient and
-                                          where('sender') == sender)
+                entries = self._db.search((where('recipient') == recipient) &
+                                          (where('sender') == sender))
         finally:
             self._msg_lock.release()
 
