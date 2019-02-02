@@ -8,6 +8,7 @@ import request
 from request import RequestType
 import database
 import json
+import pkg
 
 
 class Server:
@@ -22,6 +23,8 @@ class Server:
         self._clients = []
         self._clients_timer = threading.Timer(0.1, self._inform_about_waiting_for_clients)
         self._db = database.Database(folder, msg_path, client_path)
+        self._key_len = cfg['client']['key_len']
+        self._folder = folder
 
     def run(self):
         try:
@@ -29,7 +32,7 @@ class Server:
             running = True
             while running:
                 client, address = self._socket.accept()
-                c = Client(client, address, self._message_size, self._db)
+                c = Client(client, address, self._message_size, self._db, self._folder, self._key_len)
                 c.start()
                 self._clients.append(c)
         except socket.error as err:
@@ -61,12 +64,13 @@ class Server:
 
 
 class Client(threading.Thread):
-    def __init__(self, client, address, msg_size, db):
+    def __init__(self, client, address, msg_size, db, folder, key_len):
         threading.Thread.__init__(self)
         self.client = client
         self._address = address
         self._message_size = msg_size
         self._db = db
+        self._pkg = pkg.PrivateKeyGenerator(self._db, folder, key_len)
 
     def run(self):
         running = True
@@ -110,6 +114,13 @@ class Client(threading.Thread):
                 messages_from_interlocutor = self._db.select_messages(interlocutor, requester)
                 messages.extend(messages_from_interlocutor)
             self.client.send(str(messages).encode())
+        elif req.type == RequestType.RECEIVE_PUBKEY:
+            content = json.loads(req.value)
+            requester = content['requester']
+            interlocutor = content['interlocutor']
+            print('{} {} of {} for {} '.format(current_time, req.name, interlocutor, requester))
+            pubkey = self._pkg.get_public_key(interlocutor)
+            self.client.send(pubkey.encode())
         else:
             raise NotImplementedError
 
