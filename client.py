@@ -20,13 +20,17 @@ class Client:
         self._msg_size = cfg['message']['size']
         self._id = identifier
 
-    def send(self, text, target):
+    def send(self, text, target, wait_for_response=False):
         try:
             msg = message.Message(self._id, target, text)
             req = request.Request(RequestType.SEND_MSG, msg)
             self._open_socket()
             self._socket.connect(self._address)
             self._socket.send(str(req).encode())
+            if wait_for_response:
+                return self.get_response()
+            else:
+                return None
         except socket.error as err:
             print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
