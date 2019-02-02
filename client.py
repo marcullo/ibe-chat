@@ -9,6 +9,7 @@ import request
 from request import RequestType
 import json
 import time
+import mcrypto
 
 
 class Client:
@@ -23,6 +24,9 @@ class Client:
 
     def send(self, text, target, wait_for_response=False):
         try:
+            if self._target_pubkey is None:
+                raise RuntimeError('Target public key not obtained before!')
+            text = mcrypto.encrypt(text, self._target_pubkey)
             msg = message.Message(self._id, target, text)
             req = request.Request(RequestType.SEND_MSG, msg)
             self._open_socket()
