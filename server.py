@@ -12,13 +12,15 @@ import json
 
 class Server:
     def __init__(self, cfg):
+        folder = cfg['database']['folder']
+        file = cfg['message']['database']
         self._address = ('', cfg['connection']['port'])
         self._backlog = 5
         self._socket = None
         self._message_size = cfg['message']['size']
         self._clients = []
         self._clients_timer = threading.Timer(0.1, self._inform_about_waiting_for_clients)
-        self._db = database.Database(cfg['message']['database'])
+        self._db = database.Database(folder, file)
 
     def run(self):
         try:

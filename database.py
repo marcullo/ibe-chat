@@ -15,17 +15,18 @@ import json
 import threading
 import sys
 import time
+import config
 
 
 class Database:
-    def __init__(self, msg_path):
-        self._db = tinydb.TinyDB(msg_path)
+    def __init__(self, database_path, msg_path):
+        self._msg_db = tinydb.TinyDB('{}/{}'.format(database_path, msg_path))
         self._msg_lock = threading.Lock()
 
     def insert_message(self, msg):
         self._msg_lock.acquire()
         try:
-            self._db.insert(msg.content)
+            self._msg_db.insert(msg.content)
         finally:
             self._msg_lock.release()
 
@@ -33,14 +34,14 @@ class Database:
         self._msg_lock.acquire()
         try:
             if sender is None and recipient is None:
-                entries = self._db.all()
+                entries = self._msg_db.all()
             elif sender is None:
-                entries = self._db.search(where('recipient') == recipient)
+                entries = self._msg_db.search(where('recipient') == recipient)
             elif recipient is None:
-                entries = self._db.search(where('sender') == sender)
+                entries = self._msg_db.search(where('sender') == sender)
             else:
-                entries = self._db.search((where('recipient') == recipient) &
-                                          (where('sender') == sender))
+                entries = self._msg_db.search((where('recipient') == recipient) &
+                                              (where('sender') == sender))
         finally:
             self._msg_lock.release()
 
@@ -48,7 +49,7 @@ class Database:
 
     def clean_messages(self):
         self._msg_lock.acquire()
-        self._db.purge()
+        self._msg_db.purge()
         self._msg_lock.release()
 
 
@@ -71,8 +72,11 @@ if __name__ == "__main__":
                             time.time())
         db.insert_message(m)
 
+    conf = config.load()
+    folder = conf['database']['folder']
+    msg_file = conf['message']['database']
     db_paths = {
-        'msg_db': '.db/messages.json'  # message database
+        'msg_db': '{}/{}'.format(folder, msg_file)  # message database
     }
 
     commands = {
@@ -88,5 +92,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     path = db_paths[arg]
-    ndb = Database(path)
+    ndb = Database(folder, msg_file)
     commands[command](ndb)

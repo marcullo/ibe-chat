@@ -1,10 +1,13 @@
 {
+  "database": {
+    "folder": ".db"
+  },
   "connection": {
     "address": "localhost",
     "port": 8765
   },
   "message": {
     "size": 524288,
-    "database": ".db/messages.json"
+    "database": "messages.json"
   }
 }
