@@ -103,8 +103,9 @@ class Client(threading.Thread):
             interlocutor = content['interlocutor']
             print('{} {} among {} and {}'.format(current_time, req.name, requester, interlocutor))
             messages = self._db.select_messages(requester, interlocutor)
-            messages_from_interlocutor = self._db.select_messages(interlocutor, requester)
-            messages.extend(messages_from_interlocutor)
+            if requester != interlocutor:
+                messages_from_interlocutor = self._db.select_messages(interlocutor, requester)
+                messages.extend(messages_from_interlocutor)
             self.client.send(str(messages).encode())
         else:
             raise NotImplementedError
