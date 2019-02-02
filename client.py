@@ -123,7 +123,7 @@ if __name__ == "__main__":
             current_time = time.ctime(m['timestamp'])
             sender = identity.Identity.create(m['sender'])
             content = m['message']
-            print('{} {:>15}: {}'.format(current_time, sender.name, content))
+            print('{} {:>15}: {}'.format(current_time, sender.name if sender.name != client.id.name else 'Me', content))
 
     def chat(client):
         target_id = get_target_id('Interlocutor')
