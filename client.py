@@ -75,6 +75,7 @@ if __name__ == "__main__":
     options = {
         '1': 'Send email',
         '2': 'Get conversation',
+        '3': 'Chat',
         'CTR+C': 'Exit'
     }
 
@@ -98,14 +99,15 @@ if __name__ == "__main__":
 
         return identity.Identity(target_name, target_email)
 
-    def get_message(prompt):
+    def get_message(prompt, forced=True):
         msg = ''
         while msg == '':
             sys.stdout.write('{}: '.format(prompt))
             sys.stdout.flush()
             msg = sys.stdin.readline().strip()
-            if msg != '':
-                return msg
+            if forced and msg == '':
+                continue
+            return msg
 
     def send_email(client):
         target_id = get_target_id('Target')
@@ -123,6 +125,15 @@ if __name__ == "__main__":
             content = m['message']
             print('{} {:>15}: {}'.format(current_time, sender.name, content))
 
+    def chat(client):
+        target_id = get_target_id('Interlocutor')
+        while True:
+            get_conversation(client, target_id)
+            msg = get_message('$', False)
+            if msg == '':
+                continue
+            client.send(msg, target_id)
+
     cid = identity.Identity(sys.argv[1], sys.argv[2])
     conf = config.load()
     c = Client(conf, cid)
@@ -135,6 +146,8 @@ if __name__ == "__main__":
                 send_email(c)
             if choice == '2':
                 get_conversation(c, get_target_id('Interlocutor'))
+            if choice == '3':
+                chat(c)
             elif choice == '\x03':
                 break
         except (KeyboardInterrupt, SystemExit):
