@@ -4,12 +4,14 @@ import enum
 class RequestType(enum.Enum):
     SEND_MSG = 0,
     RECEIVE_MSGS = 1,
+    RECEIVE_PUBKEY = 2,
 
 
 class Request:
     _types = {
         RequestType.SEND_MSG: 'send_msg',
-        RequestType.RECEIVE_MSGS: 'recv_msgs'
+        RequestType.RECEIVE_MSGS: 'recv_msgs',
+        RequestType.RECEIVE_PUBKEY: 'recv_pubk',
     }
 
     def __init__(self, req_type, val):
