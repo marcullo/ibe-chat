@@ -7,6 +7,7 @@ import time
 import request
 from request import RequestType
 import database
+import json
 
 
 class Server:
@@ -87,12 +88,24 @@ class Client(threading.Thread):
         return self.client.recv(self._message_size).decode()
 
     def _process_request(self, data):
+        ts = time.time()
+        current_time = time.ctime(ts)
         req = request.Request.create(data)
+
         if req.type == RequestType.SEND_MSG:
-            msg = message.Message.create(req.value, time.time())
-            print('{} {} {} -> {}'.format(time.ctime(msg.timestamp), req.name, msg.sender, msg.recipient))
+            msg = message.Message.create(req.value, ts)
+            print('{} {} {} -> {}'.format(current_time, req.name, msg.sender, msg.recipient))
             self._db.insert_message(msg)
             self.client.send(data.encode())
+        elif req.type == RequestType.RECEIVE_MSGS:
+            content = json.loads(req.value)
+            requester = content['requester']
+            interlocutor = content['interlocutor']
+            print('{} {} among {} and {}'.format(current_time, req.name, requester, interlocutor))
+            messages = self._db.select_messages(requester, interlocutor)
+            messages_from_interlocutor = self._db.select_messages(interlocutor, requester)
+            messages.extend(messages_from_interlocutor)
+            self.client.send(str(messages).encode())
         else:
             raise NotImplementedError
 
