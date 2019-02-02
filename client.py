@@ -8,6 +8,8 @@ import message
 import request
 from request import RequestType
 import readchar
+import json
+import time
 
 
 class Client:
@@ -33,7 +35,25 @@ class Client:
             self._close_socket()
 
     def receive(self):
-        return self._socket.recv(self._msg_size)
+        return self._socket.recv(self._msg_size).decode()
+
+    def get_conversation(self, target_id):
+        try:
+            content = {
+                'requester': str(self._id),
+                'interlocutor': str(target_id)
+            }
+            req = request.Request(RequestType.RECEIVE_MSGS, json.dumps(content))
+            self._open_socket()
+            self._socket.connect(self._address)
+            self._socket.send(str(req).encode())
+            return self.receive()
+        except socket.error as err:
+            print('Error {}: {}'.format(err.errno, err.strerror))
+        except (KeyboardInterrupt, SystemExit):
+            pass
+        finally:
+            self._close_socket()
 
     def _open_socket(self):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,6 +74,7 @@ if __name__ == "__main__":
 
     options = {
         '1': 'Send email',
+        '2': 'Get conversation',
         'CTR+C': 'Exit'
     }
 
@@ -91,6 +112,17 @@ if __name__ == "__main__":
         msg = get_message(client.id)
         client.send(msg, target_id)
 
+    def get_conversation(client, target_id):
+        conversation_raw = client.get_conversation(target_id)
+        if conversation_raw is None or conversation_raw == '':
+            return
+        conversation = sorted(json.loads(conversation_raw), key=lambda c: c['timestamp'], reverse=False)
+        for m in conversation:
+            current_time = time.ctime(m['timestamp'])
+            sender = identity.Identity.create(m['sender'])
+            content = m['message']
+            print('{} {:>15}: {}'.format(current_time, sender.name, content))
+
     cid = identity.Identity(sys.argv[1], sys.argv[2])
     conf = config.load()
     c = Client(conf, cid)
@@ -101,6 +133,8 @@ if __name__ == "__main__":
             choice = readchar.readkey()
             if choice == '1':
                 send_email(c)
+            if choice == '2':
+                get_conversation(c, get_target_id('Interlocutor'))
             elif choice == '\x03':
                 break
         except (KeyboardInterrupt, SystemExit):
