@@ -48,6 +48,7 @@ class Client:
         return self._socket.recv(self._msg_size).decode()
 
     def get_conversation(self, target_id):
+        resp = None
         try:
             self._open_socket()
             self._socket.connect(self._address)
@@ -71,14 +72,20 @@ class Client:
             req = request.Request(RequestType.RECEIVE_MSGS, json.dumps(content))
             self._socket.send(str(req).encode())
             resp = self.get_response()
-            self._close_socket()
-            return resp
         except socket.error as err:
             print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
             self._close_socket()
+
+        if resp is None or self._privkey is None:
+            return None
+
+        conversation = sorted(json.loads(resp), key=lambda c: c['timestamp'], reverse=False)
+        for m in conversation:
+            m['message'] = mcrypto.decrypt(m['message'], self._privkey)
+        return conversation
 
     def _open_socket(self):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -123,10 +130,9 @@ if __name__ == "__main__":
             return msg
 
     def get_conversation(client, target_id):
-        conversation_raw = client.get_conversation(target_id)
-        if conversation_raw is None or conversation_raw == '':
+        conversation = client.get_conversation(target_id)
+        if conversation is None:
             return
-        conversation = sorted(json.loads(conversation_raw), key=lambda c: c['timestamp'], reverse=False)
         for m in conversation:
             current_time = time.ctime(m['timestamp'])
             sender = identity.Identity.create(m['sender'])
