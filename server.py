@@ -10,6 +10,7 @@ import database
 import json
 import pkg
 import os
+import mcrypto
 
 
 class Server:
@@ -113,11 +114,22 @@ class Client(threading.Thread):
             content = json.loads(req.value)
             requester = content['requester']
             interlocutor = content['interlocutor']
-            print('{} {} among {} and {}'.format(current_time, req.name, requester, interlocutor))
+            requester_pubkey = self._pkg.get_public_key(requester)
+            interlocutor_privkey = self._pkg._get_private_key(interlocutor)
+
             messages = self._db.select_messages(requester, interlocutor)
+
+            for i in range(len(messages)):
+                if requester == messages[i].recipient:
+                    continue
+                message_content = mcrypto.decrypt(messages[i].message, interlocutor_privkey)
+                messages[i].content['message'] = mcrypto.encrypt(message_content, requester_pubkey)
+
             if requester != interlocutor:
                 messages_from_interlocutor = self._db.select_messages(interlocutor, requester)
                 messages.extend(messages_from_interlocutor)
+
+            print('{} {} among {} and {}'.format(current_time, req.name, requester, interlocutor))
             self.client.send(str(messages).encode())
         elif req.type == RequestType.RECEIVE_PUBKEY:
             content = json.loads(req.value)
