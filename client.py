@@ -33,15 +33,16 @@ class Client:
             self._socket.connect(self._address)
             self._socket.send(str(req).encode())
             if wait_for_response:
-                return self.get_response()
-            else:
-                return None
+                resp = self.get_response()
+                self._close_socket()
+                return resp
         except socket.error as err:
             print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
             pass
         finally:
             self._close_socket()
+        return None
 
     def get_response(self):
         return self._socket.recv(self._msg_size).decode()
@@ -69,7 +70,9 @@ class Client:
 
             req = request.Request(RequestType.RECEIVE_MSGS, json.dumps(content))
             self._socket.send(str(req).encode())
-            return self.get_response()
+            resp = self.get_response()
+            self._close_socket()
+            return resp
         except socket.error as err:
             print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
