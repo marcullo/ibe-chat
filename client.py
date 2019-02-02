@@ -34,7 +34,7 @@ class Client:
         finally:
             self._close_socket()
 
-    def receive(self):
+    def get_response(self):
         return self._socket.recv(self._msg_size).decode()
 
     def get_conversation(self, target_id):
@@ -47,7 +47,7 @@ class Client:
             self._open_socket()
             self._socket.connect(self._address)
             self._socket.send(str(req).encode())
-            return self.receive()
+            return self.get_response()
         except socket.error as err:
             print('Error {}: {}'.format(err.errno, err.strerror))
         except (KeyboardInterrupt, SystemExit):
