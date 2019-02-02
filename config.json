@@ -4,7 +4,7 @@
     "port": 8765
   },
   "message": {
-    "size": 256,
+    "size": 524288,
     "database": ".db/messages.json"
   }
 }
