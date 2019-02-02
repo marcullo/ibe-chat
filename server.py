@@ -121,6 +121,12 @@ class Client(threading.Thread):
             print('{} {} of {} for {} '.format(current_time, req.name, interlocutor, requester))
             pubkey = self._pkg.get_public_key(interlocutor)
             self.client.send(pubkey.encode())
+        elif req.type == RequestType.RECEIVE_PRIVKEY:
+            content = json.loads(req.value)
+            requester = content['requester']
+            print('{} {} for {} '.format(current_time, req.name, requester))
+            pubkey = self._pkg._get_private_key(requester)
+            self.client.send(pubkey.encode())
         else:
             raise NotImplementedError
 
