@@ -7,7 +7,6 @@ import identity
 import message
 import request
 from request import RequestType
-import readchar
 import json
 import time
 
@@ -76,18 +75,6 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(1)
 
-    options = {
-        '1': 'Send email',
-        '2': 'Get conversation',
-        '3': 'Chat',
-        'CTR+C': 'Exit'
-    }
-
-    def print_menu():
-        print('What do you want to do?')
-        for key, option in options.items():
-            print('{:>5}: {}.'.format(key, option))
-
     def get_target_id(prompt):
         target_name = ''
         while target_name == '':
@@ -113,11 +100,6 @@ if __name__ == "__main__":
                 continue
             return msg
 
-    def send_email(client):
-        target_id = get_target_id('Target')
-        msg = get_message(client.id)
-        client.send(msg, target_id)
-
     def get_conversation(client, target_id):
         conversation_raw = client.get_conversation(target_id)
         if conversation_raw is None or conversation_raw == '':
@@ -136,23 +118,14 @@ if __name__ == "__main__":
             msg = get_message('$', False)
             if msg == '':
                 continue
-            client.send(msg, target_id)
+            client.send(msg, target_id, True)
 
     cid = identity.Identity(sys.argv[1], sys.argv[2])
     conf = config.load()
     c = Client(conf, cid)
 
     while True:
-        print_menu()
         try:
-            choice = readchar.readkey()
-            if choice == '1':
-                send_email(c)
-            if choice == '2':
-                get_conversation(c, get_target_id('Interlocutor'))
-            if choice == '3':
-                chat(c)
-            elif choice == '\x03':
-                break
+            chat(c)
         except (KeyboardInterrupt, SystemExit):
             break
