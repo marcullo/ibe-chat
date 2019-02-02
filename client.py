@@ -18,6 +18,8 @@ class Client:
         self._socket = None
         self._msg_size = cfg['message']['size']
         self._id = identifier
+        self._privkey = None
+        self._target_pubkey = None
 
     def send(self, text, target, wait_for_response=False):
         try:
@@ -42,13 +44,26 @@ class Client:
 
     def get_conversation(self, target_id):
         try:
-            content = {
-                'requester': str(self._id),
-                'interlocutor': str(target_id)
-            }
-            req = request.Request(RequestType.RECEIVE_MSGS, json.dumps(content))
             self._open_socket()
             self._socket.connect(self._address)
+
+            content = {
+                'requester': str(self._id),
+            }
+
+            if self._privkey is None:
+                req = request.Request(RequestType.RECEIVE_PRIVKEY, json.dumps(content))
+                self._socket.send(str(req).encode())
+                self._privkey = self.get_response()
+
+            content['interlocutor'] = str(target_id)
+
+            if self._target_pubkey is None:
+                req = request.Request(RequestType.RECEIVE_PUBKEY, json.dumps(content))
+                self._socket.send(str(req).encode())
+                self._target_pubkey = self.get_response()
+
+            req = request.Request(RequestType.RECEIVE_MSGS, json.dumps(content))
             self._socket.send(str(req).encode())
             return self.get_response()
         except socket.error as err:
