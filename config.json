@@ -9,5 +9,9 @@
   "message": {
     "size": 524288,
     "database": "messages.json"
+  },
+  "client": {
+    "database": "clients.json",
+    "key_len": 2048
   }
 }
